@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import SQLModel, Session, col, create_engine, func, select
 
 from Models.Models import *
-from Models.ApiModels import CategoryInsert, CategoryUpdate, InvDelete, InvUpdate, ProductInsert, ProductUpdate
+from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvUpdate, ProductInsert, ProductUpdate
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -235,7 +235,7 @@ def get_category_by_id(session: SessionDep,
 
 # Add a new category
 @app.post("/category/", response_model=Category, summary="Add a new category.")
-def add_category(item: CategoryInsert,
+def add_category(item: CategoryDataModel,
                session: SessionDep
                ) -> Category:
     # Validate category_name
@@ -254,17 +254,18 @@ def add_category(item: CategoryInsert,
     return category
 
 # Update an existing category
-@app.put("/category/", response_model=Category, summary="Update an existing category.")
-def update_category(item: CategoryUpdate,
-               session: SessionDep
-               ) -> Category:
+@app.put("/category/{category_id}", response_model=Category, summary="Update an existing category.")
+def update_category(category_id: int,
+                    item: CategoryDataModel,
+                    session: SessionDep
+                    ) -> Category:
     # Validate category_name
     if item.category_name == None or len(item.category_name) <= 0:
         raise HTTPException(status_code=404, detail="category_name must not be empty.")
 
     # Getting existing category data
     category = session.exec(select(Category)
-                           .where(Category.category_id == item.category_id)
+                           .where(Category.category_id == category_id)
                            ).first()
     
     if not category:
@@ -278,7 +279,7 @@ def update_category(item: CategoryUpdate,
     return category
 
 # Delete a product.
-@app.delete("/category/", response_model=None, summary="Delete a category by category id.")
+@app.delete("/category/{category_id}", response_model=None, summary="Delete a category by category id.")
 def delete_category(category_id: int,
                session: SessionDep
                ) -> None:
@@ -292,3 +293,88 @@ def delete_category(category_id: int,
         session.commit()
     else:
         raise HTTPException(status_code=404, detail="category_id is not valid.")
+
+
+# List all brands
+@app.get("/brand/", response_model=list[Brand], summary="List all brands.")
+def get_brand(session: SessionDep) -> list[Brand]:
+    # Get all brands using criteria, if provided.
+    brands = session.exec(select(Brand)).all()
+    
+    return list(brands)
+
+# Get brand by brand id
+@app.get("/brand/{brand_id}", response_model=Brand, summary="Get brand by brand id.")
+def get_brand_by_id(session: SessionDep,
+             brand_id: int
+            ) -> Brand:
+    # Get all products using criteria, if provided.
+    brand = session.exec(select(Brand)
+                       .where(brand_id == Brand.brand_id)
+                      ).first()
+    
+    if not brand:
+        raise HTTPException(status_code=404, detail="brand_id is not valid.")
+
+    return brand
+
+# Add a new brand
+@app.post("/brand/", response_model=Brand, summary="Add a new brand.")
+def add_brand(item: BrandDataModel,
+               session: SessionDep
+               ) -> Brand:
+    # Validate brand_name
+    if item.brand_name == None or len(item.brand_name) <= 0:
+        raise HTTPException(status_code=404, detail="brand_name must not be empty.")
+
+    # Add brand
+    brand = Brand(
+        brand_name= item.brand_name
+    )
+
+    session.add(brand)
+    session.commit()
+    session.refresh(brand)
+    
+    return brand
+
+# Update an existing brand
+@app.put("/brand/{brand_id}", response_model=Brand, summary="Update a brand.")
+def update_brand(brand_id: int,
+                item: BrandDataModel,
+               session: SessionDep
+               ) -> Brand:
+    # Validate brand_name
+    if item.brand_name == None or len(item.brand_name) <= 0:
+        raise HTTPException(status_code=404, detail="brand_name must not be empty.")
+
+    # Getting existing brand data
+    brand = session.exec(select(Brand)
+                           .where(Brand.brand_id == brand_id)
+                           ).first()
+    
+    if not brand:
+        raise HTTPException(status_code=404, detail="brand_id is not valid.")
+    
+    brand.brand_name = item.brand_name
+
+    session.commit()
+    session.refresh(brand)
+    
+    return brand
+
+# Delete a brand.
+@app.delete("/brand/{brand_id}", response_model=None, summary="Delete a brand by brand id.")
+def delete_brand(brand_id: int,
+               session: SessionDep
+               ) -> None:
+    # Deleting brand
+    brand = session.exec(select(Brand)
+                       .where(Brand.brand_id == brand_id)
+                      ).first()
+
+    if brand:
+        session.delete(brand)
+        session.commit()
+    else:
+        raise HTTPException(status_code=404, detail="brand_id is not valid.")
