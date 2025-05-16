@@ -19,6 +19,10 @@ Updates quantity of a product for a specific platform.
 
 Lists all available products
 
+### GET /product/{product_id}
+
+Gets a product by its id.
+
 ### POST /product
 
 Creates new product.
@@ -27,17 +31,27 @@ Creates new product.
 
 Updates existing product.
 
-### DELETE /product/{product_id}
+### DELETE /product/`{product_id}`
 
 Deletes existing product, along with all its related data from sales and inventory.
 
+`product_id` should be a valid product id.
+
 ### GET /category
+
+Lists all categories.
 
 ### POST /category
 
-### PUT /category/{category_id}
+Creates a new category.
 
-### DELETE /category/{category_id}
+### PUT /category/`{category_id}`
+
+Updates existing category.
+
+### DELETE /category/`{category_id}`
+
+Deletes a category along with its all related data.
 
 ### GET /brand
 

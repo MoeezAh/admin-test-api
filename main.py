@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import SQLModel, Session, col, create_engine, func, select
 
 from Models.Models import *
-from Models.ApiModels import InvDelete, InvUpdate, ProductInsert, ProductUpdate
+from Models.ApiModels import CategoryInsert, CategoryUpdate, InvDelete, InvUpdate, ProductInsert, ProductUpdate
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -208,3 +208,87 @@ def delete_prod(product_id: int,
         session.commit()
     else:
         raise HTTPException(status_code=404, detail="product_id is not valid.")
+
+
+# List all categories
+@app.get("/category/", response_model=list[Category], summary="Lists all categories.")
+def get_category(session: SessionDep) -> list[Category]:
+    # Get all categories using criteria, if provided.
+    categories = session.exec(select(Category)).all()
+    
+    return list(categories)
+
+# Get category by category id
+@app.get("/category/{category_id}", response_model=Category, summary="Get category by category id.")
+def get_category_by_id(session: SessionDep,
+             category_id: int
+            ) -> Category:
+    # Get all products using criteria, if provided.
+    category = session.exec(select(Category)
+                       .where(category_id == Category.category_id)
+                      ).first()
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="category id is not valid.")
+
+    return category
+
+# Add a new category
+@app.post("/category/", response_model=Category, summary="Add a new category.")
+def add_category(item: CategoryInsert,
+               session: SessionDep
+               ) -> Category:
+    # Validate category_name
+    if item.category_name == None or len(item.category_name) <= 0:
+        raise HTTPException(status_code=404, detail="category_name must not be empty.")
+
+    # Add category
+    category = Category(
+        category_name= item.category_name
+    )
+
+    session.add(category)
+    session.commit()
+    session.refresh(category)
+    
+    return category
+
+# Update an existing category
+@app.put("/category/", response_model=Category, summary="Update an existing category.")
+def update_category(item: CategoryUpdate,
+               session: SessionDep
+               ) -> Category:
+    # Validate category_name
+    if item.category_name == None or len(item.category_name) <= 0:
+        raise HTTPException(status_code=404, detail="category_name must not be empty.")
+
+    # Getting existing category data
+    category = session.exec(select(Category)
+                           .where(Category.category_id == item.category_id)
+                           ).first()
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="category_id is not valid.")
+    
+    category.category_name = item.category_name
+
+    session.commit()
+    session.refresh(category)
+    
+    return category
+
+# Delete a product.
+@app.delete("/category/", response_model=None, summary="Delete a category by category id.")
+def delete_category(category_id: int,
+               session: SessionDep
+               ) -> None:
+    # Deleting category
+    category = session.exec(select(Category)
+                       .where(Category.category_id == category_id)
+                      ).first()
+
+    if category:
+        session.delete(category)
+        session.commit()
+    else:
+        raise HTTPException(status_code=404, detail="category_id is not valid.")

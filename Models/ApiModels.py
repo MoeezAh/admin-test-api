@@ -21,3 +21,9 @@ class ProductUpdate(SQLModel):
     category_id: Optional[int]
     brand_id: Optional[int]
 
+class CategoryInsert(SQLModel):
+    category_name: str
+
+class CategoryUpdate(SQLModel):
+    category_id: int
+    category_name: str
