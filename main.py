@@ -192,3 +192,19 @@ def update_prod(item: ProductUpdate,
     session.refresh(product)
     
     return product
+
+# Deletes a product.
+@app.delete("/product/", response_model=None, summary="Deletes a product by product id.")
+def delete_inv(product_id: int,
+               session: SessionDep
+               ) -> None:
+    # Deleting inventory
+    product = session.exec(select(Product)
+                       .where(Product.product_id == product_id)
+                      ).first()
+
+    if product:
+        session.delete(product)
+        session.commit()
+    else:
+        raise HTTPException(status_code=404, detail="product_id is not valid.")
