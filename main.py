@@ -195,7 +195,7 @@ def update_prod(item: ProductUpdate,
 
 # Deletes a product.
 @app.delete("/product/", response_model=None, summary="Deletes a product by product id.")
-def delete_inv(product_id: int,
+def delete_prod(product_id: int,
                session: SessionDep
                ) -> None:
     # Deleting inventory
