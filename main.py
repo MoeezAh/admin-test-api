@@ -32,7 +32,7 @@ app = FastAPI(lifespan=lifespan)
 
 # API Endpoints
 
-@app.get("/inventory")
+@app.get("/inventory", tags=["Inventory"])
 def read_inv(session: SessionDep,
              offset: int = 0,
              limit: Annotated[int, Query(le=100)] = 100
@@ -41,7 +41,7 @@ def read_inv(session: SessionDep,
     return list(inv)
 
 # Adds or updates inventory item.
-@app.post("/inventory/", response_model=Inventory, summary="Adds or updates inventory item.")
+@app.post("/inventory/", tags=["Inventory"], response_model=Inventory, summary="Adds or updates inventory item.")
 def update_inv(item: InvUpdate,
                session: SessionDep
                ) -> Inventory:
@@ -85,7 +85,7 @@ def update_inv(item: InvUpdate,
     return inv
 
 # Deletes inventory item.
-@app.delete("/inventory/", response_model=None, summary="Deletes inventory item.")
+@app.delete("/inventory/", tags=["Inventory"], response_model=None, summary="Deletes inventory item.")
 def delete_inv(item: InvDelete,
                session: SessionDep
                ) -> None:
@@ -112,7 +112,7 @@ def delete_inv(item: InvDelete,
 
 
 # List all products
-@app.get("/product/", response_model=list[Product], summary="Lists all product.")
+@app.get("/product/", tags=["Product"], response_model=list[Product], summary="Lists all product.")
 def get_prod(session: SessionDep,
              category_id: Optional[int] = None,
              brand_id: Optional[int] = None
@@ -126,7 +126,7 @@ def get_prod(session: SessionDep,
     return list(products)
 
 # Add a new product
-@app.post("/product/", response_model=Product, summary="Adds a new product.")
+@app.post("/product/", tags=["Product"], response_model=Product, summary="Adds a new product.")
 def insert_prod(item: ProductInsert,
                session: SessionDep
                ) -> Product:
@@ -160,7 +160,7 @@ def insert_prod(item: ProductInsert,
     return product
 
 # Updates an existing product
-@app.put("/product/", response_model=Product, summary="Updates an existing product.")
+@app.put("/product/", tags=["Product"], response_model=Product, summary="Updates an existing product.")
 def update_prod(item: ProductUpdate,
                session: SessionDep
                ) -> Product:
@@ -195,7 +195,7 @@ def update_prod(item: ProductUpdate,
     return product
 
 # Deletes a product.
-@app.delete("/product/", response_model=None, summary="Deletes a product by product id.")
+@app.delete("/product/", tags=["Product"], response_model=None, summary="Deletes a product by product id.")
 def delete_prod(product_id: int,
                session: SessionDep
                ) -> None:
@@ -212,7 +212,7 @@ def delete_prod(product_id: int,
 
 
 # List all categories
-@app.get("/category/", response_model=list[Category], summary="Lists all categories.")
+@app.get("/category/", tags=["Category"], response_model=list[Category], summary="Lists all categories.")
 def get_category(session: SessionDep) -> list[Category]:
     # Get all categories using criteria, if provided.
     categories = session.exec(select(Category)).all()
@@ -220,7 +220,7 @@ def get_category(session: SessionDep) -> list[Category]:
     return list(categories)
 
 # Get category by category id
-@app.get("/category/{category_id}", response_model=Category, summary="Get category by category id.")
+@app.get("/category/{category_id}", tags=["Category"], response_model=Category, summary="Get category by category id.")
 def get_category_by_id(session: SessionDep,
              category_id: int
             ) -> Category:
@@ -235,7 +235,7 @@ def get_category_by_id(session: SessionDep,
     return category
 
 # Add a new category
-@app.post("/category/", response_model=Category, summary="Add a new category.")
+@app.post("/category/", tags=["Category"], response_model=Category, summary="Add a new category.")
 def add_category(item: CategoryDataModel,
                session: SessionDep
                ) -> Category:
@@ -255,7 +255,7 @@ def add_category(item: CategoryDataModel,
     return category
 
 # Update a category
-@app.put("/category/{category_id}", response_model=Category, summary="Update a category.")
+@app.put("/category/{category_id}", tags=["Category"], response_model=Category, summary="Update a category.")
 def update_category(category_id: int,
                     item: CategoryDataModel,
                     session: SessionDep
@@ -280,7 +280,7 @@ def update_category(category_id: int,
     return category
 
 # Delete a category.
-@app.delete("/category/{category_id}", response_model=None, summary="Delete a category by category id.")
+@app.delete("/category/{category_id}", tags=["Category"], response_model=None, summary="Delete a category by category id.")
 def delete_category(category_id: int,
                session: SessionDep
                ) -> None:
@@ -297,7 +297,7 @@ def delete_category(category_id: int,
 
 
 # List all brands
-@app.get("/brand/", response_model=list[Brand], summary="List all brands.")
+@app.get("/brand/", tags=["Brand"], response_model=list[Brand], summary="List all brands.")
 def get_brand(session: SessionDep) -> list[Brand]:
     # Get all brands using criteria, if provided.
     brands = session.exec(select(Brand)).all()
@@ -305,7 +305,7 @@ def get_brand(session: SessionDep) -> list[Brand]:
     return list(brands)
 
 # Get brand by brand id
-@app.get("/brand/{brand_id}", response_model=Brand, summary="Get brand by brand id.")
+@app.get("/brand/{brand_id}", tags=["Brand"], response_model=Brand, summary="Get brand by brand id.")
 def get_brand_by_id(session: SessionDep,
              brand_id: int
             ) -> Brand:
@@ -320,7 +320,7 @@ def get_brand_by_id(session: SessionDep,
     return brand
 
 # Add a new brand
-@app.post("/brand/", response_model=Brand, summary="Add a new brand.")
+@app.post("/brand/", tags=["Brand"], response_model=Brand, summary="Add a new brand.")
 def add_brand(item: BrandDataModel,
                session: SessionDep
                ) -> Brand:
@@ -340,7 +340,7 @@ def add_brand(item: BrandDataModel,
     return brand
 
 # Update an existing brand
-@app.put("/brand/{brand_id}", response_model=Brand, summary="Update a brand.")
+@app.put("/brand/{brand_id}", tags=["Brand"], response_model=Brand, summary="Update a brand.")
 def update_brand(brand_id: int,
                 item: BrandDataModel,
                session: SessionDep
@@ -365,7 +365,7 @@ def update_brand(brand_id: int,
     return brand
 
 # Delete a brand.
-@app.delete("/brand/{brand_id}", response_model=None, summary="Delete a brand by brand id.")
+@app.delete("/brand/{brand_id}", tags=["Brand"], response_model=None, summary="Delete a brand by brand id.")
 def delete_brand(brand_id: int,
                session: SessionDep
                ) -> None:
@@ -382,7 +382,7 @@ def delete_brand(brand_id: int,
 
 
 # List all sales
-@app.get("/sales/", response_model=list[Sale], summary="List all sales.")
+@app.get("/sales/", tags=["Sale"], response_model=list[Sale], summary="List all sales.")
 def get_sales(session: SessionDep,
               criteria: SalesListModel) -> list[Sale]:
     # Get all sales using criteria, if provided.
@@ -396,7 +396,7 @@ def get_sales(session: SessionDep,
     return list(sales)
 
 # Get sale by sale id
-@app.get("/sale/{sale_id}", response_model=Sale, summary="Get sale by sale id.")
+@app.get("/sale/{sale_id}", tags=["Sale"], response_model=Sale, summary="Get sale by sale id.")
 def get_sale_by_id(session: SessionDep,
              sale_id: int
             ) -> Sale:
@@ -411,7 +411,7 @@ def get_sale_by_id(session: SessionDep,
     return sale
 
 # Add a new sale
-@app.post("/sale/", response_model=Sale, summary="Add a new sale.")
+@app.post("/sale/", tags=["Sale"], response_model=Sale, summary="Add a new sale.")
 def add_sale(item: SalesDataModel,
                session: SessionDep
                ) -> Sale:
@@ -451,7 +451,7 @@ def add_sale(item: SalesDataModel,
     return sale
 
 # Update a sale
-@app.put("/sale/{sale_id}", response_model=Sale, summary="Update a sale.")
+@app.put("/sale/{sale_id}", tags=["Sale"], response_model=Sale, summary="Update a sale.")
 def update_sale(sale_id: int,
                 item: SalesDataModel,
                session: SessionDep
@@ -496,7 +496,7 @@ def update_sale(sale_id: int,
     return sale
 
 # Delete a sale.
-@app.delete("/sale/{sale_id}", response_model=None, summary="Delete a sale by sale id.")
+@app.delete("/sale/{sale_id}", tags=["Sale"], response_model=None, summary="Delete a sale by sale id.")
 def delete_sale(sale_id: int,
                session: SessionDep
                ) -> None:
