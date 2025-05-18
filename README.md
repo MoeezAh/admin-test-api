@@ -2,6 +2,24 @@
 
 This is a web API project which has been build in [Pythong](https://www.python.org/) using [FastAPI](https://fastapi.tiangolo.com/).
 
+You can run this project using following command.
+
+```
+fastaspi dev main.py
+```
+
+
+After running this project API endpoints will be available at following local URL.
+
+```
+http://127.0.0.1:8000/
+```
+
+You can browse API documentation at following local URL.
+
+```
+http://127.0.0.1:8000/docs
+```
 ## Packages
 
 This application requires following top level packages.
@@ -10,6 +28,10 @@ This application requires following top level packages.
 - [SQLModel](https://sqlmodel.tiangolo.com/) - `sqlmodel`
 
 ## End Points
+
+This API have following endpoints.
+
+***Note: API endpoints list are not syncronized with API endpoints build into this project. So those migt be out-dated.***
 
 ### GET /inventory
 
