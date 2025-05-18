@@ -1,3 +1,7 @@
+### Admin API
+
+This is a web API project which has been build in [Pythong](https://www.python.org/) using [FastAPI](https://fastapi.tiangolo.com/).
+
 ## Packages
 
 This application requires following top level packages.
