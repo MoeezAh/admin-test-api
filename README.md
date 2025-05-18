@@ -9,17 +9,17 @@ This application requires following top level packages.
 
 ### GET /inventory
 
-### POST /inventory/{product_id}
+### POST /inventory/`{product_id}`
 
 Updates quantity of a product for a specific platform.
 
-### DELETE /inventory/{product_id}
+### DELETE /inventory/`{product_id}`
 
 ### GET /product
 
 Lists all available products
 
-### GET /product/{product_id}
+### GET /product/`{product_id}`
 
 Gets a product by its id.
 
@@ -27,7 +27,7 @@ Gets a product by its id.
 
 Creates new product.
 
-### PUT /product/{product_id}
+### PUT /product/`{product_id}`
 
 Updates existing product.
 
@@ -35,11 +35,13 @@ Updates existing product.
 
 Deletes existing product, along with all its related data from sales and inventory.
 
-`product_id` should be a valid product id.
-
 ### GET /category
 
 Lists all categories.
+
+### GET /category/`{category_id}`
+
+Get a category data by its id.
 
 ### POST /category
 
@@ -55,16 +57,40 @@ Deletes a category along with its all related data.
 
 ### GET /brand
 
+List all brands.
+
+### GET /brand/`{brand_id}`
+
+Get a brand data by its id.
+
 ### POST /brand
 
-### PUT /brand/{brand_id}
+Create a new brand
 
-### DELETE /brand/{brand_id}
+### PUT /brand/`{brand_id}`
+
+Updates existing brand
+
+### DELETE /brand/`{brand_id}`
+
+Deletes a brand along with its all realated data.
 
 ### GET /sales
 
+List all sales.
+
+### GET /sales/`{sale_id}`
+
+Get sale data by sale id.
+
 ### POST /sales
 
-### PUT /sales/{sales_id}
+Adds a new sale.
 
-### DELETE /sales/{sales_id}
+### PUT /sales/`{sales_id}`
+
+Updates an existing sale data.
+
+### DELETE /sales/`{sales_id}`
+
+Deletes a sale by sale id.

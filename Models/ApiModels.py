@@ -1,4 +1,6 @@
-from typing import Optional
+from datetime import date
+from typing import Annotated, Optional
+from fastapi import Query
 from sqlmodel import SQLModel
 
 class InvUpdate(SQLModel):
@@ -26,3 +28,17 @@ class CategoryDataModel(SQLModel):
 
 class BrandDataModel(SQLModel):
     brand_name: str
+
+class SalesDataModel(SQLModel):
+    product_id: int
+    platform_id: int
+    sale_date: date
+    quantity_sold: int
+    sale_price: float
+
+class SalesListModel(SQLModel):
+    product_id: Optional[int]
+    platform_id: Optional[int]
+    sale_date: Optional[date]
+    offset: int = 0
+    limit: Annotated[int, Query(le=100)] = 100

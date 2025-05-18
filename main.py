@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import SQLModel, Session, col, create_engine, func, select
 
 from Models.Models import *
-from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvUpdate, ProductInsert, ProductUpdate
+from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvUpdate, ProductInsert, ProductUpdate, SalesDataModel, SalesListModel
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -109,6 +109,7 @@ def delete_inv(item: InvDelete,
     if inv:
         session.delete(inv)
         session.commit()
+
 
 # List all products
 @app.get("/product/", response_model=list[Product], summary="Lists all product.")
@@ -253,8 +254,8 @@ def add_category(item: CategoryDataModel,
     
     return category
 
-# Update an existing category
-@app.put("/category/{category_id}", response_model=Category, summary="Update an existing category.")
+# Update a category
+@app.put("/category/{category_id}", response_model=Category, summary="Update a category.")
 def update_category(category_id: int,
                     item: CategoryDataModel,
                     session: SessionDep
@@ -278,7 +279,7 @@ def update_category(category_id: int,
     
     return category
 
-# Delete a product.
+# Delete a category.
 @app.delete("/category/{category_id}", response_model=None, summary="Delete a category by category id.")
 def delete_category(category_id: int,
                session: SessionDep
@@ -308,7 +309,7 @@ def get_brand(session: SessionDep) -> list[Brand]:
 def get_brand_by_id(session: SessionDep,
              brand_id: int
             ) -> Brand:
-    # Get all products using criteria, if provided.
+    # Get all brands using criteria, if provided.
     brand = session.exec(select(Brand)
                        .where(brand_id == Brand.brand_id)
                       ).first()
@@ -378,3 +379,134 @@ def delete_brand(brand_id: int,
         session.commit()
     else:
         raise HTTPException(status_code=404, detail="brand_id is not valid.")
+
+
+# List all sales
+@app.get("/sales/", response_model=list[Sale], summary="List all sales.")
+def get_sales(session: SessionDep,
+              criteria: SalesListModel) -> list[Sale]:
+    # Get all sales using criteria, if provided.
+    sales = session.exec(select(Sale)
+                         .where(criteria.product_id is None or criteria.product_id == Sale.product_id,
+                                criteria.platform_id is None or criteria.platform_id == Sale.platform_id,
+                                criteria.sale_date is None or criteria.sale_date == Sale.sale_date)
+                         .offset(criteria.offset)
+                         .limit(criteria.limit)).all()
+    
+    return list(sales)
+
+# Get sale by sale id
+@app.get("/sale/{sale_id}", response_model=Sale, summary="Get sale by sale id.")
+def get_sale_by_id(session: SessionDep,
+             sale_id: int
+            ) -> Sale:
+    # Get all sales using criteria, if provided.
+    sale = session.exec(select(Sale)
+                       .where(sale_id == Sale.sale_id)
+                      ).first()
+    
+    if not sale:
+        raise HTTPException(status_code=404, detail="sale_id is not valid.")
+
+    return sale
+
+# Add a new sale
+@app.post("/sale/", response_model=Sale, summary="Add a new sale.")
+def add_sale(item: SalesDataModel,
+               session: SessionDep
+               ) -> Sale:
+   # Validate product_id
+    prod_count = session.scalar(select(func.count(col(Product.product_id)))
+                           .where(Product.product_id == item.product_id))
+    if not prod_count == 1:
+        raise HTTPException(status_code=404, detail="product_id is not valid.")
+    
+    # Validate platform_id
+    platform_count = session.scalar(select(func.count(col(Platform.platform_id)))
+                           .where(Platform.platform_id == item.platform_id))
+    if not platform_count == 1:
+        raise HTTPException(status_code=404, detail="platform_id is not valid.")
+    
+    # Validate quantity_sold
+    if item.quantity_sold <= 0:
+        raise HTTPException(status_code=404, detail="quantity_sold must be greater than zero.")
+
+    # Validate sale_price
+    if item.sale_price < 0:
+        raise HTTPException(status_code=404, detail="sale_price can not be a negitive number.")
+
+    # Add sale
+    sale = Sale(
+        product_id= item.product_id,
+        platform_id= item.platform_id,
+        sale_date= item.sale_date,
+        quantity_sold= item.quantity_sold,
+        sale_price= item.sale_price
+    )
+
+    session.add(sale)
+    session.commit()
+    session.refresh(sale)
+    
+    return sale
+
+# Update a sale
+@app.put("/sale/{sale_id}", response_model=Sale, summary="Update a sale.")
+def update_sale(sale_id: int,
+                item: SalesDataModel,
+               session: SessionDep
+               ) -> Sale:
+   # Validate product_id
+    prod_count = session.scalar(select(func.count(col(Product.product_id)))
+                           .where(Product.product_id == item.product_id))
+    if not prod_count == 1:
+        raise HTTPException(status_code=404, detail="product_id is not valid.")
+    
+    # Validate platform_id
+    platform_count = session.scalar(select(func.count(col(Platform.platform_id)))
+                           .where(Platform.platform_id == item.platform_id))
+    if not platform_count == 1:
+        raise HTTPException(status_code=404, detail="platform_id is not valid.")
+    
+    # Validate quantity_sold
+    if item.quantity_sold <= 0:
+        raise HTTPException(status_code=404, detail="quantity_sold must be greater than zero.")
+
+    # Validate sale_price
+    if item.sale_price < 0:
+        raise HTTPException(status_code=404, detail="sale_price can not be a negitive number.")
+
+    # Getting existing sale data
+    sale = session.exec(select(Sale)
+                           .where(Sale.sale_id == sale_id)
+                           ).first()
+    
+    if not sale:
+        raise HTTPException(status_code=404, detail="sale_id is not valid.")
+    
+    sale.product_id= item.product_id
+    sale.platform_id= item.platform_id
+    sale.sale_date= item.sale_date
+    sale.quantity_sold= item.quantity_sold
+    sale.sale_price= item.sale_price
+
+    session.commit()
+    session.refresh(sale)
+    
+    return sale
+
+# Delete a sale.
+@app.delete("/sale/{sale_id}", response_model=None, summary="Delete a sale by sale id.")
+def delete_sale(sale_id: int,
+               session: SessionDep
+               ) -> None:
+    # Deleting sale
+    sale = session.exec(select(Sale)
+                       .where(Sale.sale_id == sale_id)
+                      ).first()
+
+    if sale:
+        session.delete(sale)
+        session.commit()
+    else:
+        raise HTTPException(status_code=404, detail="sale_id is not valid.")
