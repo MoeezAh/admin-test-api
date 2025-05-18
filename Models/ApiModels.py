@@ -11,12 +11,12 @@ class InvListModel(SQLModel):
     offset: int = 0
     limit: Annotated[int, Query(gt=0, le=100)] = 100
 
-class InvUpdate(SQLModel):
+class InvUpdateModel(SQLModel):
     product_id: int
     platform_id: int
     stock_quantity: int
 
-class InvDelete(SQLModel):
+class InvDeleteModel(SQLModel):
     product_id: int
     platform_id: int
 
@@ -28,12 +28,12 @@ class ProductListModel(SQLModel):
     offset: int = 0
     limit: Annotated[int, Query(le=100)] = 100
 
-class ProductInsert(SQLModel):
+class ProductInsertModel(SQLModel):
     product_name: str
     category_id: Optional[int]
     brand_id: Optional[int]
 
-class ProductUpdate(SQLModel):
+class ProductUpdateModel(SQLModel):
     product_id: int
     product_name: str
     category_id: Optional[int]

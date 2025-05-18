@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import SQLModel, Session, col, create_engine, func, select
 
 from Models.Models import *
-from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvListModel, InvUpdate, ProductInsert, ProductListModel, ProductUpdate, SalesDataModel, SalesListModel
+from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDeleteModel, InvListModel, InvUpdateModel, ProductInsertModel, ProductListModel, ProductUpdateModel, SalesDataModel, SalesListModel
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -61,7 +61,7 @@ def get_inv_by_id(session: SessionDep,
 
 # Adds or updates inventory item.
 @app.post("/inventory/", tags=["Inventory"], response_model=Inventory, summary="Adds or updates inventory item.")
-def update_inv(item: InvUpdate,
+def update_inv(item: InvUpdateModel,
                session: SessionDep
                ) -> Inventory:
     # Validate product_id
@@ -105,7 +105,7 @@ def update_inv(item: InvUpdate,
 
 # Deletes inventory item.
 @app.delete("/inventory/", tags=["Inventory"], response_model=None, summary="Deletes inventory item.")
-def delete_inv(item: InvDelete,
+def delete_inv(item: InvDeleteModel,
                session: SessionDep
                ) -> None:
     # Validate product_id
@@ -162,7 +162,7 @@ def get_prod_by_id(session: SessionDep,
 
 # Add a new product
 @app.post("/product/", tags=["Product"], response_model=Product, summary="Adds a new product.")
-def insert_prod(item: ProductInsert,
+def insert_prod(item: ProductInsertModel,
                session: SessionDep
                ) -> Product:
     # Validate category_id
@@ -196,7 +196,7 @@ def insert_prod(item: ProductInsert,
 
 # Updates an existing product
 @app.put("/product/", tags=["Product"], response_model=Product, summary="Updates an existing product.")
-def update_prod(item: ProductUpdate,
+def update_prod(item: ProductUpdateModel,
                session: SessionDep
                ) -> Product:
     # Validate category_id
