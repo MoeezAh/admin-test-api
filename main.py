@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import SQLModel, Session, col, create_engine, func, select
 
 from Models.Models import *
-from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvUpdate, ProductInsert, ProductUpdate, SalesDataModel, SalesListModel
+from Models.ApiModels import BrandDataModel, CategoryDataModel, InvDelete, InvListModel, InvUpdate, ProductInsert, ProductListModel, ProductUpdate, SalesDataModel, SalesListModel
 
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -32,13 +32,32 @@ app = FastAPI(lifespan=lifespan)
 
 # API Endpoints
 
-@app.get("/inventory", tags=["Inventory"])
-def read_inv(session: SessionDep,
-             offset: int = 0,
-             limit: Annotated[int, Query(le=100)] = 100
+# Search & filter inventory
+@app.get("/inventory", tags=["Inventory"], response_model=list[Inventory], summary="Search & filter inventory.")
+def get_inv(session: SessionDep,
+            criteria: Annotated[InvListModel, Query()]
              ) -> list[Inventory]:
-    inv = session.exec(select(Inventory).offset(offset).limit(limit)).all()
+    inv = session.exec(select(Inventory)
+                       .where(criteria.product_id == None or Inventory.product_id == criteria.product_id,
+                              criteria.platform_id == None or Inventory.platform_id == criteria.platform_id,
+                              criteria.min_stock_quantity == None or Inventory.stock_quantity >= criteria.min_stock_quantity,
+                              criteria.max_stock_quantity == None or Inventory.stock_quantity <= criteria.max_stock_quantity)
+                       .offset(criteria.offset)
+                       .limit(criteria.limit)).all()
     return list(inv)
+
+# Get inventory by inventory id.
+@app.get("/inventory/{inventory_id}", tags=["Inventory"], response_model=Inventory, summary="Get inventory by inventory id.")
+def get_inv_by_id(session: SessionDep,
+             inventory_id: int) -> Inventory:
+    # Get inventory by provided inventory id
+    inventory = session.get(Inventory, inventory_id)
+
+    # Riase Not Found error if inventory with provided id isn't found.
+    if not inventory:
+        raise HTTPException(status_code=404, detail="Inventory not found.")
+    
+    return inventory
 
 # Adds or updates inventory item.
 @app.post("/inventory/", tags=["Inventory"], response_model=Inventory, summary="Adds or updates inventory item.")
@@ -114,16 +133,32 @@ def delete_inv(item: InvDelete,
 # List all products
 @app.get("/product/", tags=["Product"], response_model=list[Product], summary="Lists all product.")
 def get_prod(session: SessionDep,
-             category_id: Optional[int] = None,
-             brand_id: Optional[int] = None
+             item: Annotated[ProductListModel, Query()]
             ) -> list[Product]:
     # Get all products using criteria, if provided.
     products = session.exec(select(Product)
-                       .where((category_id == None or Product.category_id == category_id)
-                              and (brand_id == None or Product.brand_id == brand_id))
+                            .where(item.product_id == None or Product.product_id == item.product_id,
+                                   item.product_name == None or col(Product.product_name).contains(item.product_name),
+                                   item.category_id == None or Product.category_id == item.category_id,
+                                   item.brand_id == None or Product.brand_id == item.brand_id)
+                            .offset(item.offset)
+                            .limit(item.limit)
                       ).all()
     
     return list(products)
+
+# Get product by product id.
+@app.get("/product/{product_id}", tags=["Product"], response_model=Product, summary="Get product by product id.")
+def get_prod_by_id(session: SessionDep,
+             product_id: int) -> Product:
+    # Get product by provided product id
+    product = session.get(Product, product_id)
+
+    # Riase Not Found error if product with provided id isn't found.
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found.")
+    
+    return product
 
 # Add a new product
 @app.post("/product/", tags=["Product"], response_model=Product, summary="Adds a new product.")
@@ -200,9 +235,7 @@ def delete_prod(product_id: int,
                session: SessionDep
                ) -> None:
     # Deleting inventory
-    product = session.exec(select(Product)
-                       .where(Product.product_id == product_id)
-                      ).first()
+    product = session.get(Product, product_id)
 
     if product:
         session.delete(product)
@@ -222,15 +255,13 @@ def get_category(session: SessionDep) -> list[Category]:
 # Get category by category id
 @app.get("/category/{category_id}", tags=["Category"], response_model=Category, summary="Get category by category id.")
 def get_category_by_id(session: SessionDep,
-             category_id: int
-            ) -> Category:
-    # Get all products using criteria, if provided.
-    category = session.exec(select(Category)
-                       .where(category_id == Category.category_id)
-                      ).first()
+                       category_id: int
+                       ) -> Category:
+    # Get category by provided category id
+    category = session.get(Category, category_id)
     
     if not category:
-        raise HTTPException(status_code=404, detail="category id is not valid.")
+        raise HTTPException(status_code=404, detail="Category id is not valid.")
 
     return category
 
@@ -265,9 +296,7 @@ def update_category(category_id: int,
         raise HTTPException(status_code=404, detail="category_name must not be empty.")
 
     # Getting existing category data
-    category = session.exec(select(Category)
-                           .where(Category.category_id == category_id)
-                           ).first()
+    category = session.get(Category, category_id)
     
     if not category:
         raise HTTPException(status_code=404, detail="category_id is not valid.")
@@ -285,9 +314,7 @@ def delete_category(category_id: int,
                session: SessionDep
                ) -> None:
     # Deleting category
-    category = session.exec(select(Category)
-                       .where(Category.category_id == category_id)
-                      ).first()
+    category = session.get(Category, category_id)
 
     if category:
         session.delete(category)
@@ -307,12 +334,10 @@ def get_brand(session: SessionDep) -> list[Brand]:
 # Get brand by brand id
 @app.get("/brand/{brand_id}", tags=["Brand"], response_model=Brand, summary="Get brand by brand id.")
 def get_brand_by_id(session: SessionDep,
-             brand_id: int
-            ) -> Brand:
-    # Get all brands using criteria, if provided.
-    brand = session.exec(select(Brand)
-                       .where(brand_id == Brand.brand_id)
-                      ).first()
+                    brand_id: int
+                    ) -> Brand:
+    # Get brand by provided brand id
+    brand = session.get(Brand, brand_id)
     
     if not brand:
         raise HTTPException(status_code=404, detail="brand_id is not valid.")
@@ -350,9 +375,7 @@ def update_brand(brand_id: int,
         raise HTTPException(status_code=404, detail="brand_name must not be empty.")
 
     # Getting existing brand data
-    brand = session.exec(select(Brand)
-                           .where(Brand.brand_id == brand_id)
-                           ).first()
+    brand = session.get(Brand, brand_id)
     
     if not brand:
         raise HTTPException(status_code=404, detail="brand_id is not valid.")
@@ -370,9 +393,7 @@ def delete_brand(brand_id: int,
                session: SessionDep
                ) -> None:
     # Deleting brand
-    brand = session.exec(select(Brand)
-                       .where(Brand.brand_id == brand_id)
-                      ).first()
+    brand = session.get(Brand, brand_id)
 
     if brand:
         session.delete(brand)
@@ -384,7 +405,8 @@ def delete_brand(brand_id: int,
 # List all sales
 @app.get("/sales/", tags=["Sale"], response_model=list[Sale], summary="List all sales.")
 def get_sales(session: SessionDep,
-              criteria: SalesListModel) -> list[Sale]:
+              criteria:Annotated[SalesListModel, Query()]
+              ) -> list[Sale]:
     # Get all sales using criteria, if provided.
     sales = session.exec(select(Sale)
                          .where(criteria.product_id is None or criteria.product_id == Sale.product_id,
@@ -400,10 +422,8 @@ def get_sales(session: SessionDep,
 def get_sale_by_id(session: SessionDep,
              sale_id: int
             ) -> Sale:
-    # Get all sales using criteria, if provided.
-    sale = session.exec(select(Sale)
-                       .where(sale_id == Sale.sale_id)
-                      ).first()
+    # Get sale by provided sale id
+    sale = session.get(Sale, sale_id)
     
     if not sale:
         raise HTTPException(status_code=404, detail="sale_id is not valid.")
@@ -477,9 +497,7 @@ def update_sale(sale_id: int,
         raise HTTPException(status_code=404, detail="sale_price can not be a negitive number.")
 
     # Getting existing sale data
-    sale = session.exec(select(Sale)
-                           .where(Sale.sale_id == sale_id)
-                           ).first()
+    sale = session.get(Sale, sale_id)
     
     if not sale:
         raise HTTPException(status_code=404, detail="sale_id is not valid.")
@@ -501,9 +519,7 @@ def delete_sale(sale_id: int,
                session: SessionDep
                ) -> None:
     # Deleting sale
-    sale = session.exec(select(Sale)
-                       .where(Sale.sale_id == sale_id)
-                      ).first()
+    sale = session.get(Sale, sale_id)
 
     if sale:
         session.delete(sale)
